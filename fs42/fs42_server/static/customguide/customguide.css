@@ -377,3 +377,44 @@ body {
 .grid-program-block.current.movie-block {
   background-color: var(--movie-current-bg, var(--movie-block-bg, #7b1717)) !important;
 }
+
+/* Continuation arrows use plain Unicode characters in program titles. */
+.grid-program-block .program-title,
+.listing-row .show-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Positioned continuation arrows for grid guide blocks */
+.grid-program-block {
+  position: absolute;
+}
+
+.grid-program-block .continuation-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--program-continuation-arrow-color, var(--show-title-color, #ffffff));
+  font-family: var(--show-title-font), var(--font-family);
+  font-size: var(--show-title-size, 0.88em);
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.grid-program-block .continuation-left {
+  left: 4px;
+}
+
+.grid-program-block .continuation-right {
+  right: 4px;
+}
+
+.grid-program-block.continues-before .program-title {
+  padding-left: 1.1em;
+}
+
+.grid-program-block.continues-after .program-title {
+  padding-right: 1.1em;
+}

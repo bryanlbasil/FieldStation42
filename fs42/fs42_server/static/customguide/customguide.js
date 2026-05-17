@@ -187,6 +187,32 @@ function findBlockForSlot(blocks, slotStart) {
   return null;
 }
 
+
+function parseGuideTime(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  return new Date(value);
+}
+
+function blockStartsBeforeSlot(block, slot) {
+  const blockStart = parseGuideTime(block && block.start_time);
+  const slotStart = parseGuideTime(slot && slot.start);
+  return blockStart && slotStart && blockStart < slotStart;
+}
+
+function blockEndsAfterSlot(block, slot) {
+  const blockEnd = parseGuideTime(block && block.end_time);
+  const slotEnd = parseGuideTime(slot && slot.end);
+  return blockEnd && slotEnd && blockEnd > slotEnd;
+}
+
+function continuationTitle(title, block, slot) {
+  const baseTitle = title || 'Untitled';
+  const leftArrow = blockStartsBeforeSlot(block, slot) ? '◀ ' : '';
+  const rightArrow = blockEndsAfterSlot(block, slot) ? ' ▶' : '';
+  return `${leftArrow}${baseTitle}${rightArrow}`;
+}
+
 function buildScrollStrip(slots, schedules) {
   const strip = document.createElement('div');
   strip.id = 'guide-scroll-strip';
@@ -228,8 +254,8 @@ function buildScrollStrip(slots, schedules) {
 
       const result = findBlockForSlot(schedules[station.network_name] || [], slot.start);
       if (result) {
-        const t = result.block.title || offairText;
-        titleSpan.textContent = t.length > 20 ? t.slice(0, 20) + '…' : t;
+        const t = continuationTitle(result.block.title || offairText, result.block, slot);
+        titleSpan.textContent = t.length > 24 ? t.slice(0, 24) + '…' : t;
         if (result.continued) row.classList.add('continued');
       } else {
         titleSpan.textContent = offairText;
@@ -404,8 +430,32 @@ function createGridProgramBlock(block, guideStartMs, guideEndMs, totalMs, now) {
 
   const titleSpan = document.createElement('span');
   titleSpan.className = 'program-title';
+  const guideWindow = {
+    start: new Date(guideStartMs),
+    end: new Date(guideEndMs)
+  };
+
+  const startsBefore = blockStartsBeforeSlot(block, guideWindow);
+  const endsAfter = blockEndsAfterSlot(block, guideWindow);
+
+  if (startsBefore) {
+    el.classList.add('continues-before');
+    const leftArrow = document.createElement('span');
+    leftArrow.className = 'continuation-arrow continuation-left';
+    leftArrow.textContent = '◀';
+    el.appendChild(leftArrow);
+  }
+
   titleSpan.textContent = block.title || 'Untitled';
   el.appendChild(titleSpan);
+
+  if (endsAfter) {
+    el.classList.add('continues-after');
+    const rightArrow = document.createElement('span');
+    rightArrow.className = 'continuation-arrow continuation-right';
+    rightArrow.textContent = '▶';
+    el.appendChild(rightArrow);
+  }
 
   return el;
 }
