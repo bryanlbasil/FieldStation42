@@ -188,6 +188,61 @@ function findBlockForSlot(blocks, slotStart) {
 }
 
 
+
+function guideDetailsText(block) {
+  const nfo = block && block.guide_nfo;
+  if (!nfo) return '';
+
+  const info = nfo.info ? String(nfo.info).trim() : '';
+  const description = nfo.description ? String(nfo.description).trim() : '';
+
+  if (info && description) return `${info} ${description}`;
+  return info || description || '';
+}
+
+
+function guideMovieListingText(block) {
+  const nfo = block && block.guide_nfo;
+  const rawTitle = (nfo && nfo.title) || (block && block.title) || 'Untitled';
+  const title = `"${String(rawTitle).toUpperCase()}"`;
+
+  const info = nfo && nfo.info ? String(nfo.info).trim() : '';
+  const description = nfo && nfo.description ? String(nfo.description).trim() : '';
+
+  let year = '';
+  let rating = '';
+
+  const yearMatch = info.match(/\b(19|20)\d{2}\b/);
+  if (yearMatch) {
+    year = yearMatch[0];
+  }
+
+  const ratingMatch = info.match(/\b(G|PG|PG-13|R|NC-17|NR|TV-Y|TV-Y7|TV-G|TV-PG|TV-14|TV-MA)\b/i);
+  if (ratingMatch) {
+    rating = ratingMatch[0].toUpperCase();
+  }
+
+  const parts = [title];
+
+  if (rating) {
+    parts.push(rating);
+  }
+
+  if (year) {
+    parts.push(`(${year})`);
+  } else if (info) {
+    parts.push(info);
+  }
+
+  let line = parts.join(' ');
+
+  if (description) {
+    line += ` ${description}`;
+  }
+
+  return line;
+}
+
 function parseGuideTime(value) {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -254,7 +309,8 @@ function buildScrollStrip(slots, schedules) {
 
       const result = findBlockForSlot(schedules[station.network_name] || [], slot.start);
       if (result) {
-        const t = continuationTitle(result.block.title || offairText, result.block, slot);
+        const displayTitle = (result.block.guide_nfo && result.block.guide_nfo.title) || result.block.title || offairText;
+        const t = continuationTitle(displayTitle, result.block, slot);
         titleSpan.textContent = t.length > 24 ? t.slice(0, 24) + '…' : t;
         if (result.continued) row.classList.add('continued');
       } else {
@@ -428,13 +484,10 @@ function createGridProgramBlock(block, guideStartMs, guideEndMs, totalMs, now) {
   el.style.left = leftPct + '%';
   el.style.width = `calc(${widthPct}% - 2px)`;
 
-  const titleSpan = document.createElement('span');
-  titleSpan.className = 'program-title';
   const guideWindow = {
     start: new Date(guideStartMs),
     end: new Date(guideEndMs)
   };
-
   const startsBefore = blockStartsBeforeSlot(block, guideWindow);
   const endsAfter = blockEndsAfterSlot(block, guideWindow);
 
@@ -446,7 +499,16 @@ function createGridProgramBlock(block, guideStartMs, guideEndMs, totalMs, now) {
     el.appendChild(leftArrow);
   }
 
-  titleSpan.textContent = block.title || 'Untitled';
+  const titleSpan = document.createElement('span');
+  titleSpan.className = 'program-title';
+
+  if (block.is_movie && block.guide_nfo) {
+    titleSpan.classList.add('movie-listing-text');
+    titleSpan.textContent = guideMovieListingText(block);
+  } else {
+    titleSpan.textContent = block.title || 'Untitled';
+  }
+
   el.appendChild(titleSpan);
 
   if (endsAfter) {

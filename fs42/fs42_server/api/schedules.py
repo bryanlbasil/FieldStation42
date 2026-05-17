@@ -2,6 +2,9 @@ from fastapi import APIRouter
 from datetime import datetime
 from fs42.station_manager import StationManager
 from fs42.liquid_api import LiquidAPI
+from fs42.nfo_agent import NFOAgent
+from fs42.fs42_server.api.tmdb_helper import get_tmdb_helper
+import os
 
 router = APIRouter(prefix="/schedules", tags=["schedules"])
 
@@ -50,23 +53,113 @@ def _station_movie_tags(station_config, content_station=None):
     return tags
 
 
+def _first_content(content):
+    content_items = _as_list(content)
+    return content_items[0] if content_items else None
+
+
+def _content_file_path(content):
+    first_content = _first_content(content)
+    if not first_content:
+        return None
+
+    return (
+        _get_value(first_content, "realpath")
+        or _get_value(first_content, "path")
+    )
+
+
+def _content_base_name(content):
+    first_content = _first_content(content)
+    if not first_content:
+        return ""
+
+    title = _get_value(first_content, "title")
+    if title:
+        return str(title)
+
+    file_path = _content_file_path(content)
+    if file_path:
+        return os.path.splitext(os.path.basename(file_path))[0]
+
+    return ""
+
+
+def _guide_movie_metadata(content, metadata_cache):
+    file_path = _content_file_path(content)
+    base_name = _content_base_name(content)
+
+    if not file_path and not base_name:
+        return None
+
+    cache_key = file_path or base_name
+    if cache_key in metadata_cache:
+        return metadata_cache[cache_key]
+
+    guide_nfo = None
+
+    if file_path:
+        try:
+            file_nfo = NFOAgent.read_nfo(file_path)
+        except Exception:
+            file_nfo = None
+
+        if file_nfo:
+            guide_nfo = {
+                "title": file_nfo.title,
+                "info": file_nfo.info,
+                "description": file_nfo.description,
+                "source": "nfo"
+            }
+
+    if guide_nfo is None and base_name:
+        tmdb_helper = get_tmdb_helper()
+        if tmdb_helper.is_configured():
+            try:
+                tmdb_data = tmdb_helper.search_movie(base_name)
+            except Exception:
+                tmdb_data = None
+
+            if tmdb_data:
+                release_date = tmdb_data.get("release_date", "")
+                guide_nfo = {
+                    "title": tmdb_data.get("title", base_name),
+                    "info": release_date[:4] if release_date else "",
+                    "description": tmdb_data.get("overview", ""),
+                    "source": "tmdb"
+                }
+
+    metadata_cache[cache_key] = guide_nfo
+    return guide_nfo
+
+
 def _mark_movie_blocks(station_config, schedule_blocks):
+    metadata_cache = {}
+
     for block in schedule_blocks or []:
         content = _get_value(block, "content")
         tags = _content_tags(content)
 
         content_station = None
-        content_items = _as_list(content)
-        if content_items:
-            content_station = _get_value(content_items[0], "station")
+        first_content = _first_content(content)
+        if first_content:
+            content_station = _get_value(first_content, "station")
 
         movie_tags = _station_movie_tags(station_config, content_station)
         is_movie = bool(tags.intersection(movie_tags))
 
+        guide_nfo = None
+        if is_movie:
+            guide_nfo = _guide_movie_metadata(content, metadata_cache)
+
         if isinstance(block, dict):
             block["is_movie"] = is_movie
+            if guide_nfo:
+                block["guide_nfo"] = guide_nfo
         else:
             setattr(block, "is_movie", is_movie)
+            if guide_nfo:
+                setattr(block, "guide_nfo", guide_nfo)
 
     return schedule_blocks
 

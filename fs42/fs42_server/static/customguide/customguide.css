@@ -418,3 +418,97 @@ body {
 .grid-program-block.continues-after .program-title {
   padding-right: 1.1em;
 }
+
+/* Final Prevue-style movie listing text
+   Uses the normal guide program font sizing, but allows movie metadata to wrap to two lines. */
+.grid-program-block.movie-block {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  padding: var(--movie-block-padding, 3px 6px) !important;
+}
+
+.grid-program-block.movie-block .program-title.movie-listing-text {
+  display: -webkit-box !important;
+  position: static !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 2.25em !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  color: var(--show-title-color) !important;
+  font-family: var(--show-title-font), var(--font-family) !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: 1.12 !important;
+
+  white-space: normal !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+.grid-program-block.movie-block .program-details {
+  display: none !important;
+}
+
+.grid-program-block.movie-block.continues-before {
+  padding-left: 1.45em !important;
+}
+
+.grid-program-block.movie-block.continues-after {
+  padding-right: 1.45em !important;
+}
+
+.grid-program-block.movie-block .continuation-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--program-continuation-arrow-color, var(--show-title-color, #ffffff)) !important;
+  font-family: var(--show-title-font), var(--font-family) !important;
+  font-size: inherit !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+.grid-program-block.movie-block .continuation-left {
+  left: 4px !important;
+}
+
+.grid-program-block.movie-block .continuation-right {
+  right: 4px !important;
+}
+
+/* Final continuation arrow positioning */
+.grid-program-block .continuation-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--program-continuation-arrow-color, var(--show-title-color, #ffffff)) !important;
+  font-family: var(--show-title-font), var(--font-family) !important;
+  font-size: inherit !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+}
+
+.grid-program-block .continuation-left {
+  left: 4px !important;
+}
+
+.grid-program-block .continuation-right {
+  right: 4px !important;
+}
+
+.grid-program-block.continues-before {
+  padding-left: 1.45em !important;
+}
+
+.grid-program-block.continues-after {
+  padding-right: 1.45em !important;
+}
