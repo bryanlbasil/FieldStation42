@@ -512,3 +512,21 @@ body {
 .grid-program-block.continues-after {
   padding-right: 1.45em !important;
 }
+
+/* MPAA rating icons inside movie guide listings */
+.grid-program-block.movie-block .rating-icon {
+  display: inline-block;
+  height: var(--rating-icon-height, 0.95em);
+  width: auto;
+  margin: 0 0.22em;
+  vertical-align: var(--rating-icon-vertical-align, -0.08em);
+  image-rendering: auto;
+}
+
+.grid-program-block.movie-block .rating-text-fallback {
+  display: inline-block;
+  margin: 0 0.22em;
+  font-size: inherit;
+  line-height: 1;
+  font-weight: inherit;
+}

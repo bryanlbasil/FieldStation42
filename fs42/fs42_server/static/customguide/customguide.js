@@ -201,6 +201,114 @@ function guideDetailsText(block) {
 }
 
 
+
+function ratingIconPath(rating) {
+  if (!rating) return '';
+
+  const normalized = String(rating)
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+
+  const iconMap = {
+    'G': 'g.png',
+    'PG': 'pg.png',
+    'PG-13': 'pg13.png',
+    'PG13': 'pg13.png',
+    'R': 'r.png',
+    'NC-17': 'nc17.png',
+    'NC17': 'nc17.png',
+    'NR': 'nr.png',
+    'NOTRATED': 'nr.png',
+    'UNRATED': 'nr.png'
+  };
+
+  const filename = iconMap[normalized];
+  return filename ? `ratings/${filename}` : '';
+}
+
+function appendMovieText(parent, text) {
+  if (!text) return;
+  parent.appendChild(document.createTextNode(text));
+}
+
+function appendRatingIcon(parent, rating) {
+  const iconPath = ratingIconPath(rating);
+
+  if (!rating) return;
+
+  if (!iconPath) {
+    const fallback = document.createElement('span');
+    fallback.className = 'rating-text-fallback';
+    fallback.textContent = rating;
+    parent.appendChild(fallback);
+    return;
+  }
+
+  const img = document.createElement('img');
+  img.className = 'rating-icon';
+  img.src = iconPath;
+  img.alt = rating;
+  img.title = rating;
+
+  img.onerror = function () {
+    const fallback = document.createElement('span');
+    fallback.className = 'rating-text-fallback';
+    fallback.textContent = rating;
+    img.replaceWith(fallback);
+  };
+
+  parent.appendChild(img);
+}
+
+function renderGuideMovieListing(parent, block) {
+  const nfo = block && block.guide_nfo;
+  const rawTitle = (nfo && nfo.title) || (block && block.title) || 'Untitled';
+  const title = `"${String(rawTitle).toUpperCase()}"`;
+
+  const info = nfo && nfo.info ? String(nfo.info).trim() : '';
+  const description = nfo && nfo.description ? String(nfo.description).trim() : '';
+
+  let year = nfo && nfo.year ? String(nfo.year).trim() : '';
+  let rating = nfo && nfo.rating ? String(nfo.rating).trim().toUpperCase() : '';
+  const cast = Array.isArray(nfo && nfo.cast) ? nfo.cast.filter(Boolean).slice(0, 2) : [];
+
+  if (!year) {
+    const yearMatch = info.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch) {
+      year = yearMatch[0];
+    }
+  }
+
+  if (!rating) {
+    const ratingMatch = info.match(/\b(G|PG|PG-13|R|NC-17|NR)\b/i);
+    if (ratingMatch) {
+      rating = ratingMatch[0].toUpperCase();
+    }
+  }
+
+  appendMovieText(parent, title);
+
+  if (rating) {
+    appendMovieText(parent, ' ');
+    appendRatingIcon(parent, rating);
+  }
+
+  if (year) {
+    appendMovieText(parent, ` (${year})`);
+  } else if (info) {
+    appendMovieText(parent, ` ${info}`);
+  }
+
+  if (cast.length) {
+    appendMovieText(parent, ` ${cast.join(', ')}.`);
+  }
+
+  if (description) {
+    appendMovieText(parent, ` ${description}`);
+  }
+}
+
 function guideMovieListingText(block) {
   const nfo = block && block.guide_nfo;
   const rawTitle = (nfo && nfo.title) || (block && block.title) || 'Untitled';
@@ -513,7 +621,7 @@ function createGridProgramBlock(block, guideStartMs, guideEndMs, totalMs, now) {
 
   if (block.is_movie && block.guide_nfo) {
     titleSpan.classList.add('movie-listing-text');
-    titleSpan.textContent = guideMovieListingText(block);
+    renderGuideMovieListing(titleSpan, block);
   } else {
     titleSpan.textContent = block.title || 'Untitled';
   }
