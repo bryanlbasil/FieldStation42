@@ -122,9 +122,13 @@ def _guide_movie_metadata(content, metadata_cache):
 
             if tmdb_data:
                 release_date = tmdb_data.get("release_date", "")
+                year = tmdb_data.get("year") or (release_date[:4] if release_date else "")
                 guide_nfo = {
                     "title": tmdb_data.get("title", base_name),
-                    "info": release_date[:4] if release_date else "",
+                    "info": year,
+                    "year": year,
+                    "rating": tmdb_data.get("certification", ""),
+                    "cast": tmdb_data.get("cast", []),
                     "description": tmdb_data.get("overview", ""),
                     "source": "tmdb"
                 }

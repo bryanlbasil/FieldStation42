@@ -112,6 +112,76 @@ class TMDBHelper:
         except Exception as e:
             logger.warning(f"Failed to save cache for '{title}': {e}")
 
+    def _extract_us_certification(self, details: Dict[str, Any]) -> str:
+        """Extract the US theatrical certification from TMDB release_dates."""
+        release_dates = details.get("release_dates", {}).get("results", [])
+
+        us_release = None
+        for entry in release_dates:
+            if entry.get("iso_3166_1") == "US":
+                us_release = entry
+                break
+
+        if not us_release:
+            return ""
+
+        releases = us_release.get("release_dates", [])
+
+        # Prefer common theatrical release types first.
+        # TMDB types: 1 Premiere, 2 Theatrical limited, 3 Theatrical,
+        # 4 Digital, 5 Physical, 6 TV.
+        preferred_types = [3, 2, 1, 4, 5, 6]
+
+        for release_type in preferred_types:
+            for release in releases:
+                cert = (release.get("certification") or "").strip()
+                if cert and release.get("type") == release_type:
+                    return cert
+
+        for release in releases:
+            cert = (release.get("certification") or "").strip()
+            if cert:
+                return cert
+
+        return ""
+
+    def _extract_top_cast(self, details: Dict[str, Any], limit: int = 2) -> list[str]:
+        """Extract top-billed cast names from TMDB credits."""
+        cast_entries = details.get("credits", {}).get("cast", [])
+        names = []
+
+        for entry in cast_entries:
+            name = (entry.get("name") or "").strip()
+            if name:
+                names.append(name)
+            if len(names) >= limit:
+                break
+
+        return names
+
+    def _get_movie_details_with_extras(self, tmdb_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch movie details plus release dates and credits."""
+        if not self.is_configured():
+            return None
+
+        try:
+            details_url = f"{TMDB_BASE_URL}/movie/{tmdb_id}"
+            params = {
+                "api_key": self.api_key,
+                "language": "en-US",
+                "append_to_response": "release_dates,credits"
+            }
+
+            response = self.session.get(details_url, params=params, timeout=5)
+            response.raise_for_status()
+
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"Failed to get TMDB details/extras for ID {tmdb_id}: {e}")
+            return None
+
+
     def search_movie(self, title: str) -> Optional[Dict[str, Any]]:
 
         if not self.is_configured():
@@ -156,6 +226,16 @@ class TMDBHelper:
             # Get the first (best) match
             movie = results[0]
 
+            # Fetch detail extras so guide/PPV users can display
+            # certifications and top-billed cast when available.
+            details = self._get_movie_details_with_extras(movie.get("id"))
+
+            certification = ""
+            cast = []
+            if details:
+                certification = self._extract_us_certification(details)
+                cast = self._extract_top_cast(details, limit=2)
+
             # Extract relevant data
             movie_data = {
                 "tmdb_id": movie.get("id"),
@@ -163,6 +243,9 @@ class TMDBHelper:
                 "original_title": movie.get("original_title"),
                 "overview": movie.get("overview", ""),
                 "release_date": movie.get("release_date", ""),
+                "year": movie.get("release_date", "")[:4] if movie.get("release_date") else "",
+                "certification": certification,
+                "cast": cast,
                 "poster_path": movie.get("poster_path"),
                 "poster_url": f"{TMDB_IMAGE_BASE_URL}{movie.get('poster_path')}" if movie.get("poster_path") else None,
                 "backdrop_path": movie.get("backdrop_path"),

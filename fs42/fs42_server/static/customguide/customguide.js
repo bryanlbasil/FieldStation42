@@ -209,17 +209,22 @@ function guideMovieListingText(block) {
   const info = nfo && nfo.info ? String(nfo.info).trim() : '';
   const description = nfo && nfo.description ? String(nfo.description).trim() : '';
 
-  let year = '';
-  let rating = '';
+  let year = nfo && nfo.year ? String(nfo.year).trim() : '';
+  let rating = nfo && nfo.rating ? String(nfo.rating).trim().toUpperCase() : '';
+  const cast = Array.isArray(nfo && nfo.cast) ? nfo.cast.filter(Boolean).slice(0, 2) : [];
 
-  const yearMatch = info.match(/\b(19|20)\d{2}\b/);
-  if (yearMatch) {
-    year = yearMatch[0];
+  if (!year) {
+    const yearMatch = info.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch) {
+      year = yearMatch[0];
+    }
   }
 
-  const ratingMatch = info.match(/\b(G|PG|PG-13|R|NC-17|NR|TV-Y|TV-Y7|TV-G|TV-PG|TV-14|TV-MA)\b/i);
-  if (ratingMatch) {
-    rating = ratingMatch[0].toUpperCase();
+  if (!rating) {
+    const ratingMatch = info.match(/\b(G|PG|PG-13|R|NC-17|NR|TV-Y|TV-Y7|TV-G|TV-PG|TV-14|TV-MA)\b/i);
+    if (ratingMatch) {
+      rating = ratingMatch[0].toUpperCase();
+    }
   }
 
   const parts = [title];
@@ -232,6 +237,10 @@ function guideMovieListingText(block) {
     parts.push(`(${year})`);
   } else if (info) {
     parts.push(info);
+  }
+
+  if (cast.length) {
+    parts.push(`${cast.join(', ')}.`);
   }
 
   let line = parts.join(' ');
