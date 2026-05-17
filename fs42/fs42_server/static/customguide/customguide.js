@@ -204,6 +204,9 @@ function buildScrollStrip(slots, schedules) {
       const row = document.createElement('div');
       row.className = 'listing-row';
       if (channelAfter) row.classList.add('channel-after');
+      if (result && result.block && result.block.is_movie) {
+        row.classList.add('movie-block');
+      }
 
       const channelInfo = document.createElement('span');
       channelInfo.className = 'channel-info';
@@ -391,6 +394,9 @@ function createGridProgramBlock(block, guideStartMs, guideEndMs, totalMs, now) {
 
   const el = document.createElement('div');
   el.className = 'grid-program-block';
+  if (block && block.is_movie) {
+    el.classList.add('movie-block');
+  }
   if (bStart <= now && bEnd > now) el.classList.add('current');
 
   el.style.left = leftPct + '%';

@@ -113,6 +113,7 @@ class StationManager(object):
                     "server_port",
                     "normalize_titles",
                     "tmdb_api_key",
+                    "guide_metadata",
                     "recall_last_channel",
                     "schedule_agent",
                     "video_seek_timeout",

@@ -361,5 +361,19 @@ body {
     style(--current-show-title-color: null): var(--program-current-color, #b0ffe8);
     else: var(--current-show-title-color)
     );
+}\n\n/* Movie blocks - driven by schedule block is_movie metadata */
+.listing-row.movie-block,
+.grid-program-block.movie-block,
+.grid-row:nth-child(even) .grid-program-block.movie-block {
+  background-color: var(--movie-block-bg, #7b1717);
+  color: var(--movie-block-color, #ffffff);
 }
 
+.listing-row.movie-block .show-title,
+.grid-program-block.movie-block .program-title {
+  color: var(--movie-block-color, #ffffff);
+}
+
+.grid-program-block.current.movie-block {
+  background-color: var(--movie-current-bg, var(--movie-block-bg, #7b1717)) !important;
+}
