@@ -185,3 +185,5 @@ git pull upstream main
 This is experimental.
 
 It currently focuses on movies in the web guide. TMDB metadata depends on title matching, so incorrect matches are possible. The visual styling may also need small CSS adjustments depending on your guide theme and display.
+
+You may have seen photos of my local setup. Those photos show additional experimental text wrapping, dynamic block resizing, PNG arrow styling, and support for inline closed captions icons, but those experiments are not included in this public branch.
