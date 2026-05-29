@@ -1,4 +1,5 @@
 # Guide Movie Metadata Experimental Branch
+This branch is for testing purposes only and might not be actively maintained.
 
 This is an experimental FieldStation42 branch that adds movie metadata to the web guide. 
 
